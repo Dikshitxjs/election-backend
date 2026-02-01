@@ -6,12 +6,11 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # CORS / Security
-    # Read CORS origins from env, support comma-separated lists and trim whitespace.
     _cors_raw = os.getenv("CORS_ORIGINS")
     if _cors_raw:
         CORS_ORIGINS = [o.strip() for o in _cors_raw.split(",") if o.strip()]
     else:
-        # Default to common localhost dev origins (common dev ports)
+        # Default localhost dev origins
         CORS_ORIGINS = [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
