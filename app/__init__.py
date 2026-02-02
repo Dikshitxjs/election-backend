@@ -16,17 +16,15 @@ def create_app():
     Migrate(app, db)
 
     # --- CORS ---
-    cors_origins = getattr(app.config, "CORS_ORIGINS", [])
-
+    cors_origins = getattr(app.config, "CORS_ORIGINS", ["http://localhost:3000"])
     CORS(
-    app,
-    resources={r"/*": {"origins": cors_origins}},
-    supports_credentials=True,  # allow cookies/auth
-    allow_headers=["Content-Type", "Authorization"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    max_age=86400,
-)
-
+        app,
+        resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}},
+        supports_credentials=False,  
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        max_age=86400,  
+    )
 
     # --- Health / Root routes ---
     @app.route("/")

@@ -3,7 +3,7 @@ from app.database.db import db
 from app.models.votes import Vote
 from app.models.candidate import Candidate
 
-votes_bp = Blueprint("votes", __name__, strict_slashes=False)
+votes_bp = Blueprint("votes", __name__)
 
 # --- POST / GET votes ---
 @votes_bp.route("/", methods=["GET", "POST"])
