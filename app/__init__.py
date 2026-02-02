@@ -5,37 +5,29 @@ from app.database.db import db, init_db
 from app.routes import register_routes
 import os
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object("app.config.Config")
+app = Flask(__name__)
+app.config.from_object("app.config.Config")
 
-    # Initialize DB
-    init_db(app)
+# Initialize DB
+init_db(app)
+Migrate(app, db)
 
-    # Migrations
-    Migrate(app, db)
+# CORS
+CORS(app, resources={r"/*": {"origins": getattr(app.config, 'CORS_ORIGINS', ['http://localhost:3000'])}})
 
-    # --- CORS ---
-    cors_origins = getattr(app.config, "CORS_ORIGINS", ["http://localhost:3000"])
-    CORS(
-        app,
-        resources={r"/*": {"origins": app.config["CORS_ORIGINS"]}},
-        supports_credentials=False,  
-        allow_headers=["Content-Type", "Authorization"],
-        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        max_age=86400,  
-    )
+# Root / Health
+@app.route("/")
+def root():
+    return {"service": "Election 2082 API", "status": "running"}, 200
 
-    # --- Health / Root routes ---
-    @app.route("/")
-    def root():
-        return {"service": "Election 2082 API", "status": "running"}, 200
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
 
-    @app.route("/health")
-    def health():
-        return {"status": "ok"}, 200
+# Blueprints
+register_routes(app)
 
-    # --- Register all blueprints ---
-    register_routes(app)
-
-    return app
+# Only run when testing locally
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
