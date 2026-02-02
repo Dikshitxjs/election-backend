@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.database.db import db
 from app.models.comment import Comment
 
-comments_bp = Blueprint("comments", __name__)
+comments_bp = Blueprint("comments", __name__, strict_slashes=False)
 
 # --- GET + POST /api/comments/ ---
 @comments_bp.route("/", methods=["GET", "POST"])

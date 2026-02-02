@@ -3,7 +3,7 @@ from app.models.candidate import Candidate
 from app.models.votes import Vote
 from app.models.comment import Comment
 
-candidates_bp = Blueprint("candidates", __name__)
+candidates_bp = Blueprint("candidates", __name__, strict_slashes=False)
 
 @candidates_bp.route("/", methods=["GET"])
 def get_candidates():

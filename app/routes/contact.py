@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app
 
-contact_bp = Blueprint("contact", __name__)
+contact_bp = Blueprint("contact", __name__, strict_slashes=False)
 
 
 @contact_bp.route("", methods=["GET"])
