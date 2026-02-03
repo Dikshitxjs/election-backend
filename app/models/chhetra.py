@@ -7,7 +7,7 @@ class Chhetra(db.Model):
     name = db.Column(db.String(120), nullable=False, unique=True)
     region = db.Column(db.String(120), nullable=True)
 
-    # Relationship (optional but useful)
+    # Relationship
     candidates = db.relationship(
         "Candidate",
         backref="chhetra",

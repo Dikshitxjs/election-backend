@@ -7,7 +7,9 @@ class Candidate(db.Model):
     name = db.Column(db.String, nullable=False)
     party = db.Column(db.String, nullable=False)
     photo = db.Column(db.String, nullable=True)
-    chhetra_id = db.Column(db.Integer, nullable=False)
+
+    #  add ForeignKey
+    chhetra_id = db.Column(db.Integer, db.ForeignKey("chhetras.id"), nullable=False)
 
     def to_dict(self):
         return {
