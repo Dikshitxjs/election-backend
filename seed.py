@@ -4,33 +4,62 @@ from app.database.db import db
 from app.models.chhetra import Chhetra
 from app.models.candidate import Candidate
 
-DUMMY_FIRST = [
-    "Anil", "Bikash", "Dipesh", "Kiran", "Milan",
-    "Nabin", "Prakash", "Ramesh", "Suman", "Yogesh"
-]
-
-DUMMY_LAST = [
-    "Adhikari", "Basnet", "Gurung", "Karki", "Poudel",
-    "Rai", "Shrestha", "Tamang", "Thapa", "Magar"
-]
+# Party short name to full name mapping
+PARTY_NAMES = {
+    "UML": "CPN (UML)",
+    "Congress": "Nepali Congress",
+    "RSP": "Rastriya Swatantra Party",
+    "Maoist": "CPN (Maoist Centre)",
+    "PLP": "Pragatisheel Loktantrik Party",
+    "RPP": "Rastriya Prajatantra Party",
+    "IND": "Independent",
+    "ULP": "Unified Left Party",  # Assuming this exists based on seed data
+}
 
 GENUINE = {
-    "Jhapa-05": [
-        {"name": "Balen Shan", "party": "RSP"},
-        {"name": "KP Oli", "party": "UML"},
-        {"name": "Sagar Tamang", "party": "Congress"},
+    "Rukum East": [
+        {"name": "Prachanda", "party": "Maoist"},
+        {"name": "Sandeep Pun", "party": "PLP"},
+    ],
+    "Tanahun-01": [
+        {"name": "Swornim Wagle", "party": "RSP"},
+        {"name": "Govinda KC", "party": "Congress"},
+    ],
+    "Kathmandu-01": [
+        {"name": "Rabindra Mishra", "party": "RPP"},
     ],
     "Kathmandu-03": [
+        {"name": "Kulman Ghising", "party": "ULP"},
+        {"name": "Raju Pandey", "party": "RSP"},
         {"name": "Rameshwor Phuyal", "party": "UML"},
-        {"name": "Rajy Pander", "party": "RSP"},
-        {"name": "Ramesh Setu", "party": "Congress"},
+        {"name": "Ramesh Aryal", "party": "Congress"},
     ],
     "Gulmi-01": [
         {"name": "Sagar Dhakal", "party": "RSP"},
+        {"name": "Pradeep Gyawali", "party": "UML"},
+        {"name": "Chandra Bhandari", "party": "Congress"},
+    ],
+    "Chitwan-03": [
+        {"name": "Sabita Gautam", "party": "RSP"},
+        {"name": "Renu Dhakal", "party": "Maoist"},
     ],
     "Bhaktapur-02": [
         {"name": "Mahesh Basnet", "party": "UML"},
         {"name": "Rajiv Khatri", "party": "RSP"},
+        {"name": "Shova Pathak", "party": "IND"},
+    ],
+    "Jhapa-02": [
+        {"name": "Devraj Ghimre", "party": "UML"},
+        {"name": "Dibya Rana", "party": "RSP"},
+    ],
+    "Sarlahi-04": [
+        {"name": "Amresh Singh", "party": "RSP"},
+        {"name": "Ganagna Thapa", "party": "Congress"},
+    ],
+    "Jhapa-05": [
+        {"name": "Balen Shan", "party": "RSP"},
+        {"name": "KP Oli", "party": "UML"},
+        {"name": "Sagar Tamang", "party": "Congress"},
     ],
 }
 
@@ -66,68 +95,31 @@ def seed():
         print(f"✅ Chhetras added: {len(chhetras)}")
 
         # --------------------
-        # Candidates (3 per chhetra)
+        # Candidates (ONLY genuine candidates - no fallback)
         # --------------------
         candidates = []
-        for idx, ch in enumerate(chhetras, start=1):
-            candidates.extend([
-                Candidate(name=f"Candidate {idx}-1", party="UML", photo=None, chhetra_id=ch.id),
-                Candidate(name=f"Candidate {idx}-2", party="Congress", photo=None, chhetra_id=ch.id),
-                Candidate(name=f"Candidate {idx}-3", party="RSP", photo=None, chhetra_id=ch.id),
-            ])
+        total_candidates = 0
+        
+        for ch in chhetras:
+            genuine_list = GENUINE.get(ch.name, [])
+            if genuine_list:
+                for g in genuine_list:
+                    candidates.append(
+                        Candidate(
+                            name=g.get("name"),
+                            party=PARTY_NAMES.get(g.get("party"), g.get("party")),
+                            photo=None,
+                            chhetra_id=ch.id
+                        )
+                    )
+                    total_candidates += 1
+                print(f"   ✓ {ch.name}: {len(genuine_list)} genuine candidates added")
+            else:
+                print(f"   ⚠ {ch.name}: No genuine candidates (skipped)")
 
         db.session.add_all(candidates)
         db.session.commit()
-        print(f"✅ Candidates added: {len(candidates)}")
-        
-        # --------------------
-        # Update candidate names with genuine + dummy data
-        # --------------------
-        professionalize_candidates()
-
-def professionalize_candidates():
-    """Update candidate names after seeding"""
-    chhetra_map = {
-        c.id: c.name
-        for c in Chhetra.query.all()
-    }
-
-    dummy_i = 0
-    dummy_j = 0
-
-    candidates = Candidate.query.order_by(
-        Candidate.chhetra_id,
-        Candidate.id
-    ).all()
-
-    per_chhetra_index = {}
-
-    for c in candidates:
-        ch_name = chhetra_map.get(c.chhetra_id, "Unknown Region")
-
-        if ch_name not in per_chhetra_index:
-            per_chhetra_index[ch_name] = 0
-
-        idx = per_chhetra_index[ch_name]
-        genuine_list = GENUINE.get(ch_name, [])
-
-        matched = False
-
-        for g in genuine_list:
-            if g["party"] == c.party and idx < len(genuine_list):
-                c.name = g["name"]
-                matched = True
-                break
-
-        if not matched:
-            c.name = f"{DUMMY_FIRST[dummy_i]} {DUMMY_LAST[dummy_j]}"
-            dummy_i = (dummy_i + 1) % len(DUMMY_FIRST)
-            dummy_j = (dummy_j + 1) % len(DUMMY_LAST)
-
-        per_chhetra_index[ch_name] += 1
-
-    db.session.commit()
-    print(f"✅ Updated {len(candidates)} candidates with genuine + dummy names")
+        print(f"✅ Total candidates added: {total_candidates}")
 
 if __name__ == "__main__":
     seed()
