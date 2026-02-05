@@ -10,9 +10,19 @@ def comments():
     if request.method == "GET":
         # Optional query param to filter by candidate
         candidate_id = request.args.get("candidateId", type=int)
+        fingerprint = request.args.get("fingerprint")
         query = Comment.query
         if candidate_id:
             query = query.filter_by(candidate_id=candidate_id)
+
+        # If a fingerprint is provided, map it to a deterministic user_id
+        # (same approach as votes endpoint) and filter by that user.
+        if fingerprint:
+            try:
+                user_id = abs(hash(fingerprint)) % (10 ** 12)
+                query = query.filter_by(user_id=user_id)
+            except Exception:
+                pass
 
         comments_list = [
             {"id": c.id, "userId": c.user_id, "candidateId": c.candidate_id, "message": c.message}
@@ -23,8 +33,16 @@ def comments():
     elif request.method == "POST":
         data = request.json or {}
         user_id = data.get("userId") or 0
+        fingerprint = data.get("fingerprint")
         candidate_id = data.get("candidateId")
         message = data.get("message", "")
+
+        # If a fingerprint is provided, compute the same user_id mapping
+        if fingerprint:
+            try:
+                user_id = abs(hash(fingerprint)) % (10 ** 12)
+            except Exception:
+                user_id = user_id or 0
 
         if not candidate_id or not message.strip():
             return jsonify({"error": "candidateId and message are required"}), 400

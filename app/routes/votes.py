@@ -11,9 +11,21 @@ def votes():
     if request.method == "GET":
         # Optional: filter by candidateId
         candidate_id = request.args.get("candidateId", type=int)
+        fingerprint = request.args.get("fingerprint")
         query = Vote.query
         if candidate_id:
             query = query.filter_by(candidate_id=candidate_id)
+
+        # If fingerprint provided, compute user_id mapping and return user's vote info
+        if fingerprint and candidate_id:
+            try:
+                user_id = abs(hash(fingerprint)) % (10 ** 12)
+                existing = Vote.query.filter_by(user_id=user_id, candidate_id=candidate_id).first()
+                support = Vote.query.filter_by(candidate_id=candidate_id, vote_type="support").count()
+                oppose = Vote.query.filter_by(candidate_id=candidate_id, vote_type="oppose").count()
+                return jsonify({"supportCount": support, "opposeCount": oppose, "userVote": existing.vote_type if existing else None, "alreadyVoted": bool(existing)})
+            except Exception:
+                pass
 
         votes_list = [{
             "id": v.id,
